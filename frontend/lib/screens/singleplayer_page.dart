@@ -1,12 +1,14 @@
-// lib\screens\singleplayer_page.dart, do not remove this line
+// lib/screens/singleplayer_page.dart
+//
+// Singleplayer game creation screen. We default the mode to 'Classic',
+// and after creating a game, we go to the first round (StreetViewPage).
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../widgets/common_app_bar.dart';
-import '../widgets/custom_button.dart';
-import '../theme.dart';
+// We'll navigate to StreetViewPage after game creation
+import 'streetview_page.dart';
 
 class SingleplayerPage extends StatefulWidget {
   const SingleplayerPage({Key? key}) : super(key: key);
@@ -16,251 +18,159 @@ class SingleplayerPage extends StatefulWidget {
 }
 
 class _SingleplayerPageState extends State<SingleplayerPage> {
-  // Game modes
-  final List<String> modes = ['Classic', 'Frenzy', 'Creative', 'Custom'];
-  String selectedMode = 'Classic';
-
-  // If mode is "Custom," user can upload a file. Otherwise, pick from the retrieved map list.
-  bool isCustomFileMode = false;
-
-  // Round time in seconds (or minutes) — up to you how you interpret it
-  final TextEditingController _roundTimeCtrl = TextEditingController(text: '60');
-
-  // The full list of .geojson maps from the backend
+  // List of maps from backend
   List<String> allMaps = [];
-
-  // The filtered list after search
-  List<String> filteredMaps = [];
-
-  // The map currently selected
   String selectedMap = '';
 
-  // For searching maps
-  final TextEditingController _mapSearchCtrl = TextEditingController();
+  // Form fields
+  final TextEditingController _timeCtrl = TextEditingController(text: '60');
+  final TextEditingController _roundCtrl = TextEditingController(text: '5');
+  // Default to "Classic" for now:
+  final TextEditingController _modeCtrl = TextEditingController(text: 'Classic');
 
-  // Example base URL for the Flask server (adjust as needed)
+  // Example base URL for your backend
   final String baseUrl = 'http://127.0.0.1:5000';
 
   @override
   void initState() {
     super.initState();
     _fetchMapList();
-
-    // Listen for search field changes to filter
-    _mapSearchCtrl.addListener(_filterMapList);
   }
 
-  @override
-  void dispose() {
-    _mapSearchCtrl.removeListener(_filterMapList);
-    _mapSearchCtrl.dispose();
-    super.dispose();
-  }
-
-  /// Fetch the list of .geojson maps from the Flask backend
+  /// Fetch .geojson filenames from /maps
   Future<void> _fetchMapList() async {
+    final url = Uri.parse('$baseUrl/maps');
     try {
-      final response = await http.get(Uri.parse('$baseUrl/maps'));
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
+      final resp = await http.get(url);
+      if (resp.statusCode == 200) {
+        final List<dynamic> data = json.decode(resp.body);
         setState(() {
-          allMaps = jsonData.map((e) => e.toString()).toList();
-          filteredMaps = List.from(allMaps);
-
-          if (filteredMaps.isNotEmpty) {
-            selectedMap = filteredMaps.first;
+          allMaps = data.map((e) => e.toString()).toList();
+          if (allMaps.isNotEmpty) {
+            selectedMap = allMaps.first;
           }
         });
+        debugPrint("[_fetchMapList] Fetched maps: $allMaps");
       } else {
-        debugPrint('Failed to load maps. Status code: ${response.statusCode}');
+        debugPrint("[_fetchMapList] Failed, status=${resp.statusCode}, body=${resp.body}");
       }
     } catch (e) {
-      debugPrint('Error loading maps from backend: $e');
-      setState(() {
-        allMaps = [];
-        filteredMaps = [];
-      });
+      debugPrint("[_fetchMapList] error => $e");
     }
-  }
-
-  /// Filter the maps based on the text in [_mapSearchCtrl].
-  void _filterMapList() {
-    final query = _mapSearchCtrl.text.trim().toLowerCase();
-    setState(() {
-      filteredMaps = allMaps
-          .where((m) => m.toLowerCase().contains(query))
-          .toList();
-
-      if (!filteredMaps.contains(selectedMap) && filteredMaps.isNotEmpty) {
-        selectedMap = filteredMaps.first;
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CommonAppBar(),
+      appBar: AppBar(title: const Text("OtterGuessr Singleplayer")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Container(
-          // "Source-engine" style: thick border, background color
-          decoration: BoxDecoration(
-            color: fieldColor,
-            borderRadius: BorderRadius.circular(borderRadiusValue),
-            border: Border.all(color: Colors.black, width: 3),
-          ),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Singleplayer Setup',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text(
+              "Start a New Game Session (Singleplayer)",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+
+            if (allMaps.isEmpty) ...[
+              const Text("Loading map list or none found..."),
               const SizedBox(height: 20),
-
-              // Game Mode
-              Row(
-                children: [
-                  const Text(
-                    'Game Mode:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 10),
-                  DropdownButton<String>(
-                    value: selectedMode,
-                    items: modes.map((mode) {
-                      return DropdownMenuItem(value: mode, child: Text(mode));
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          selectedMode = val;
-                          isCustomFileMode = (val == 'Custom');
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // If NOT custom mode, show the map selection from server
-              if (!isCustomFileMode) _buildMapSelection(),
-
-              // If custom mode, allow user to upload a .geojson
-              if (isCustomFileMode) _buildCustomFileUpload(),
-              const SizedBox(height: 20),
-
-              // Round Time
-              _buildLabeledField(
-                label: 'Round Time (seconds)',
-                child: TextField(
-                  controller: _roundTimeCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Start Button
-              CustomButton(
-                text: 'Start Game',
-                onPressed: () {
-                  final mode = selectedMode;
-                  final mapName = selectedMap;
-                  final roundTime = int.tryParse(_roundTimeCtrl.text.trim()) ?? 60;
-                  debugPrint('Starting singleplayer:');
-                  debugPrint('Mode: $mode');
-                  debugPrint('Map: $mapName');
-                  debugPrint('Round Time: $roundTime seconds');
-
-                  // Insert logic to begin singleplayer game
-                  // e.g., navigate to the game screen with these parameters
+            ] else ...[
+              const Text("Select Map:", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              DropdownButton<String>(
+                value: selectedMap,
+                items: allMaps.map((m) {
+                  return DropdownMenuItem(value: m, child: Text(m));
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => selectedMap = val);
+                  }
                 },
               ),
+              const SizedBox(height: 20),
             ],
-          ),
+
+            _buildLabeled("Time Limit (seconds)", _timeCtrl),
+            _buildLabeled("Number of Rounds", _roundCtrl),
+            _buildLabeled("Mode", _modeCtrl),
+
+            ElevatedButton(
+              onPressed: _startGame,
+              child: const Text("Start Game"),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// Helper widget to show a label + field in a vertical layout
-  Widget _buildLabeledField({required String label, required Widget child}) {
+  /// Helper widget for labeled textfields
+  Widget _buildLabeled(String label, TextEditingController ctrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        child,
-      ],
-    );
-  }
-
-  /// Builds the map selection section with a search field + dropdown
-  Widget _buildMapSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Select a map:',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-
-        // Search box
         TextField(
-          controller: _mapSearchCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Search maps...',
-            border: OutlineInputBorder(),
-          ),
+          controller: ctrl,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
         ),
-        const SizedBox(height: 10),
-
-        if (filteredMaps.isEmpty)
-          const Text('No matching maps found.'),
-        if (filteredMaps.isNotEmpty)
-          DropdownButton<String>(
-            value: selectedMap.isNotEmpty ? selectedMap : filteredMaps.first,
-            items: filteredMaps.map((m) {
-              return DropdownMenuItem(value: m, child: Text(m));
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                setState(() {
-                  selectedMap = val;
-                });
-              }
-            },
-          ),
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  /// Allows user to choose a custom .geojson outside of the known assets
-  Widget _buildCustomFileUpload() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Upload your own .geojson:',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        CustomButton(
-          text: 'Choose File',
-          onPressed: () {
-            // Typically call a file picker to get a local file path
-            // Then store the path for your custom logic
-            debugPrint('Custom file upload button clicked');
-          },
-        ),
-      ],
-    );
+  /// Sends a POST to /create_game with selected map + user inputs
+  Future<void> _startGame() async {
+    if (selectedMap.isEmpty) {
+      debugPrint("[_startGame] No map selected!");
+      return;
+    }
+    final timeLimit = int.tryParse(_timeCtrl.text.trim()) ?? 60;
+    final roundCount = int.tryParse(_roundCtrl.text.trim()) ?? 5;
+    final mode = _modeCtrl.text.trim().isEmpty ? "Classic" : _modeCtrl.text.trim();
+
+    final payload = {
+      "mapName": selectedMap,
+      "timeLimit": timeLimit,
+      "roundCount": roundCount,
+      "mode": mode
+    };
+
+    final url = Uri.parse('$baseUrl/create_game');
+    debugPrint("[_startGame] POST => $payload");
+    try {
+      final resp = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(payload),
+      );
+      debugPrint("[_startGame] status=${resp.statusCode}, body=${resp.body}");
+      if (resp.statusCode == 200 || resp.statusCode == 201) {
+        final data = json.decode(resp.body);
+        final gameId = data["gameId"];
+        debugPrint("Game created: gameId=$gameId");
+
+        // Navigate to Round 1
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => StreetViewPage(
+              gameId: gameId,
+              roundIndex: 1,
+              roundCount: roundCount,
+            ),
+          ),
+        );
+      } else {
+        // Possibly show an error to the user
+        debugPrint("[_startGame] fail => ${resp.body}");
+      }
+    } catch (e) {
+      debugPrint("[_startGame] error => $e");
+    }
   }
 }

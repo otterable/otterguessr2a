@@ -12,7 +12,12 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  http: ^0.13.5   # <-- IMPORTANT: for making HTTP requests
+
+  http: ^0.13.5
+  # If you want WebView on mobile:
+  webview_flutter: ^4.2.1
+  # If you want WebView on web:
+  webview_flutter_web: ^0.2.3+4
 
 dev_dependencies:
   flutter_test:
@@ -21,8 +26,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # You can remove or comment out map assets if you no longer load them from local bundles
   assets:
     - assets/logo.png
-    # - assets/maps/maps_list.txt  <-- Not needed if you only read map list from Flask
-    # - assets/maps/...

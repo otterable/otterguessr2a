@@ -1,182 +1,165 @@
-# app.py, do not remove this line
+"""
+app.py
 
-import time
+Flask app for OtterGuessr2:
+ - /maps -> returns a list of .geojson files in assets/maps
+ - /heartbeat -> quick connectivity check
+ - /create_game, /submit_guess, /finish_game -> custom game logic
+ - /download_game_data -> optional
+"""
+
+import logging
 import os
-from flask import Flask, jsonify, request, render_template, send_from_directory
+
+from flask import Flask, jsonify, request, send_file, make_response
 from flask_cors import CORS
 
-app = Flask(__name__, template_folder='templates')
-CORS(app)  # Enable CORS if your Flutter app runs on a different host/port
+from game_logic import (
+    create_custom_game,
+    record_guess,
+    finish_game,
+    export_game_data,
+    GAMES
+)
 
-#######################################
-# Minimal "in-memory database" example
-#######################################
-servers = []     # Each: { "id": int, "name": str, "mode": str, "map": str, "password": str, ... }
-scoreboard = []  # Each: { "playerName": str, "score": int }
+app = Flask(__name__)
+CORS(app)  # Enable cross-origin requests from Flutter
 
-#######################################
-# Adjust path to .geojson map folder
-#######################################
-MAPS_FOLDER = os.path.join(os.path.dirname(__file__), 'assets', 'maps')
+logging.basicConfig(level=logging.DEBUG)
 
-#######################################
-# TEMPLATES / DEBUG
-#######################################
+# Directory for .geojson maps
+GEOJSON_FOLDER = os.path.join(os.path.dirname(__file__), "assets", "maps")
+
 @app.route('/')
-def debug_index():
-    """
-    Simple debug index to verify that the Flask server is up.
-    Renders templates/index.html
-    """
-    return render_template('index.html')  # Make sure you have templates/index.html
+def index():
+    """Basic debug route."""
+    return jsonify({"message": "Custom GeoGuessr-like backend running"}), 200
 
 @app.route('/heartbeat', methods=['GET'])
 def heartbeat():
-    """
-    Returns a simple JSON to confirm the server is alive and responding.
-    """
-    return jsonify({"status": "ok", "message": "GeoGuessr-like backend is reachable!"}), 200
+    """Check backend connectivity."""
+    return jsonify({"status": "ok", "message": "Backend is reachable!"}), 200
 
-#######################################
-# MAPS Endpoints
-#######################################
 @app.route('/maps', methods=['GET'])
 def get_map_list():
     """
-    Returns a JSON list of all .geojson filenames in assets/maps.
+    Returns a JSON list of all .geojson filenames in assets/maps/.
+    Example: ["Austria.geojson", "Argentina.geojson", "Antarctica.geojson"]
     """
     try:
-        filenames = [f for f in os.listdir(MAPS_FOLDER) if f.lower().endswith('.geojson')]
+        filenames = [
+            f for f in os.listdir(GEOJSON_FOLDER)
+            if f.lower().endswith('.geojson')
+        ]
+        logging.debug(f"[/maps] Found {len(filenames)} .geojson files.")
         return jsonify(filenames), 200
     except Exception as e:
+        logging.exception("[/maps] Error listing .geojson files.")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/maps/<path:filename>', methods=['GET'])
-def get_map_file(filename):
+@app.route('/create_game', methods=['POST'])
+def create_game_endpoint():
     """
-    Serves a specific .geojson file if needed (e.g. /maps/Canada.geojson).
+    Creates a new game: random points in the polygon from .geojson.
+    Expects JSON: { "mapName": "Austria.geojson", "timeLimit": 60, "roundCount": 5, "mode": "Classic" }
+    Returns { "message": "Game created", "gameId": "<uuid>" }
     """
+    data = request.get_json(force=True)
+    map_name = data.get("mapName", "").strip()
+    time_limit = int(data.get("timeLimit", 60))
+    round_count = int(data.get("roundCount", 5))
+    mode = data.get("mode", "Classic")  # future usage
+
+    logging.debug(f"[/create_game] mapName={map_name}, timeLimit={time_limit}, roundCount={round_count}, mode={mode}")
+
+    geo_path = os.path.join(GEOJSON_FOLDER, map_name)
+    if not os.path.isfile(geo_path):
+        logging.error(f"[/create_game] Map file not found: {map_name}")
+        return jsonify({"error": f"Map file not found: {map_name}"}), 400
+
     try:
-        return send_from_directory(MAPS_FOLDER, filename)
+        game_id = create_custom_game(geo_path, time_limit, round_count)
+        logging.debug(f"[/create_game] Created gameId={game_id}")
+        return jsonify({"message": "Game created", "gameId": game_id}), 201
     except Exception as e:
+        logging.exception("[/create_game] Exception while creating game.")
         return jsonify({"error": str(e)}), 500
 
-#######################################
-# SERVER MANAGEMENT
-#######################################
-@app.route('/create_server', methods=['POST'])
-def create_server():
+@app.route('/submit_guess', methods=['POST'])
+def submit_guess_endpoint():
     """
-    Create a new game server. Expects JSON with fields like:
+    Submit a guess for a specific round.
+    JSON: { "gameId": "...", "roundIndex": 0, "userLat": 48.2, "userLng": 16.36 }
+    Returns { "distanceKm", "score", "roundIndex", "correctLat", "correctLng", "totalPointsSoFar" }
+    """
+    data = request.get_json(force=True)
+    game_id = data.get("gameId")
+    round_index = int(data.get("roundIndex", 0))
+    user_lat = float(data.get("userLat", 0.0))
+    user_lng = float(data.get("userLng", 0.0))
+
+    logging.debug(f"[/submit_guess] gameId={game_id}, roundIndex={round_index}, lat={user_lat}, lng={user_lng}")
+
+    try:
+        partial = record_guess(game_id, round_index, user_lat, user_lng)
+        return jsonify(partial), 200
+    except ValueError as ve:
+        logging.error(f"[/submit_guess] ValueError: {ve}")
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logging.exception("[/submit_guess] Error.")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/finish_game', methods=['POST'])
+def finish_game_endpoint():
+    """
+    Finishes the game, returns scoreboard with round-by-round detail.
+    JSON: { "gameId": "..." }
+    Returns:
     {
-        "name": "MyServer",
-        "mode": "Classic",
-        "map": "Canada.geojson",
-        "password": "12345",
-        "maxPlayers": 8,
-        "roundTime": 60
+      "gameId": "...",
+      "settings": {...},
+      "roundResults": [ { "roundIndex", "correctLat", "correctLng", "distanceKm", "score", ... } ],
+      "totalScore": int
     }
     """
     data = request.get_json(force=True)
-    server_name = data.get('name', '').strip()
-    mode = data.get('mode', 'Classic')
-    map_file = data.get('map', '')
-    password = data.get('password', '')
-    max_players = data.get('maxPlayers', 8)
-    round_time = data.get('roundTime', 60)
+    game_id = data.get("gameId")
+    logging.debug(f"[/finish_game] gameId={game_id}")
 
-    # Generate unique ID for the server
-    server_id = int(time.time())
+    try:
+        final_data = finish_game(game_id)
+        return jsonify(final_data), 200
+    except ValueError as ve:
+        logging.error(f"[/finish_game] ValueError: {ve}")
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logging.exception("[/finish_game] Error finalizing game.")
+        return jsonify({"error": str(e)}), 500
 
-    new_server = {
-        "id": server_id,
-        "name": server_name,
-        "mode": mode,
-        "map": map_file,
-        "password": password,
-        "maxPlayers": max_players,
-        "roundTime": round_time,
-        "createdAt": time.ctime(),
-        "players": []
-    }
-
-    servers.append(new_server)
-
-    return jsonify({
-        "message": "Server created successfully.",
-        "server": new_server
-    }), 201
-
-@app.route('/join_server', methods=['POST'])
-def join_server():
+@app.route('/download_game_data', methods=['GET'])
+def download_game_data():
     """
-    Join an existing server. Expects JSON like:
-    {
-      "serverId": 1691938584,
-      "playerName": "Alice",
-      "passwordAttempt": ""
-    }
+    GET /download_game_data?gameId=XXX
+    Returns the entire game data as JSON for replays.
     """
-    data = request.get_json(force=True)
-    server_id = data.get('serverId')
-    player_name = data.get('playerName', '').strip()
-    password_attempt = data.get('passwordAttempt', '')
+    game_id = request.args.get("gameId", "")
+    if not game_id:
+        logging.error("[/download_game_data] Missing gameId param.")
+        return jsonify({"error": "Missing gameId"}), 400
+    if game_id not in GAMES:
+        logging.error(f"[/download_game_data] Invalid gameId={game_id}")
+        return jsonify({"error": "Invalid gameId"}), 404
 
-    found_server = next((s for s in servers if s['id'] == server_id), None)
-    if not found_server:
-        return jsonify({"error": "Server not found."}), 404
+    try:
+        data_str = export_game_data(game_id)
+        response = make_response(data_str)
+        response.headers["Content-Disposition"] = f"attachment; filename=game_{game_id}.json"
+        response.mimetype = "application/json"
+        return response
+    except Exception as e:
+        logging.exception("[/download_game_data] Export error.")
+        return jsonify({"error": str(e)}), 500
 
-    # Check password
-    if found_server['password'] and found_server['password'] != password_attempt:
-        return jsonify({"error": "Invalid password."}), 403
-
-    # Check capacity
-    if len(found_server['players']) >= found_server['maxPlayers']:
-        return jsonify({"error": "Server is full."}), 403
-
-    # Add player
-    found_server['players'].append(player_name)
-
-    return jsonify({
-        "message": f"{player_name} joined server {found_server['name']}",
-        "server": found_server
-    }), 200
-
-#######################################
-# SCOREBOARD
-#######################################
-@app.route('/scoreboard', methods=['GET'])
-def get_scoreboard():
-    """
-    Returns a JSON list of scoreboard entries, sorted by desc. score
-    """
-    sorted_board = sorted(scoreboard, key=lambda x: x['score'], reverse=True)
-    return jsonify(sorted_board), 200
-
-@app.route('/scoreboard', methods=['POST'])
-def update_scoreboard():
-    """
-    Add or update a player's score. Expects JSON:
-    {
-      "playerName": "Alice",
-      "score": 4500
-    }
-    """
-    data = request.get_json(force=True)
-    player_name = data.get('playerName', '').strip()
-    new_score = data.get('score', 0)
-
-    existing = next((p for p in scoreboard if p['playerName'] == player_name), None)
-    if existing:
-        existing['score'] = new_score
-    else:
-        scoreboard.append({"playerName": player_name, "score": new_score})
-
-    return jsonify({"message": "Score updated successfully."}), 200
-
-#######################################
-# RUN THE APP
-#######################################
-if __name__ == '__main__':
-    # For local dev; remove debug=True in production
+if __name__ == "__main__":
     app.run(debug=True, port=5000)
