@@ -1,49 +1,52 @@
-// lib\screens\create_server_page.dart, do not remove this line
+// lib\screens\singleplayer_page.dart, do not remove this line
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle; // For loading assets
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import '../widgets/common_app_bar.dart';
 import '../widgets/custom_button.dart';
 import '../theme.dart';
 
-class CreateServerPage extends StatefulWidget {
-  const CreateServerPage({Key? key}) : super(key: key);
+class SingleplayerPage extends StatefulWidget {
+  const SingleplayerPage({Key? key}) : super(key: key);
 
   @override
-  State<CreateServerPage> createState() => _CreateServerPageState();
+  State<SingleplayerPage> createState() => _SingleplayerPageState();
 }
 
-class _CreateServerPageState extends State<CreateServerPage> {
-  final TextEditingController _serverNameCtrl = TextEditingController();
-  final TextEditingController _passwordCtrl = TextEditingController();
-  final TextEditingController _maxPlayersCtrl = TextEditingController(text: '8');
-
-  // For the .geojson map search
-  final TextEditingController _mapSearchCtrl = TextEditingController();
-
-  // For demonstration, let's assume these modes
+class _SingleplayerPageState extends State<SingleplayerPage> {
+  // Game modes
   final List<String> modes = ['Classic', 'Frenzy', 'Creative', 'Custom'];
   String selectedMode = 'Classic';
 
-  // If mode is "Custom," user can upload a file. Otherwise, pick from assets.
+  // If mode is "Custom," user can upload a file. Otherwise, pick from the retrieved map list.
   bool isCustomFileMode = false;
 
-  /// The full list of .geojson maps read from `assets/maps_list.txt`
+  // Round time in seconds (or minutes) — up to you how you interpret it
+  final TextEditingController _roundTimeCtrl = TextEditingController(text: '60');
+
+  // The full list of .geojson maps from the backend
   List<String> allMaps = [];
 
-  /// The filtered list after search
+  // The filtered list after search
   List<String> filteredMaps = [];
 
-  /// The map currently selected
+  // The map currently selected
   String selectedMap = '';
+
+  // For searching maps
+  final TextEditingController _mapSearchCtrl = TextEditingController();
+
+  // Example base URL for the Flask server (adjust as needed)
+  final String baseUrl = 'http://127.0.0.1:5000';
 
   @override
   void initState() {
     super.initState();
-    // Start loading the list of .geojson files
-    _loadMaps();
+    _fetchMapList();
 
-    // Listen for changes in the map search field to filter
+    // Listen for search field changes to filter
     _mapSearchCtrl.addListener(_filterMapList);
   }
 
@@ -54,23 +57,25 @@ class _CreateServerPageState extends State<CreateServerPage> {
     super.dispose();
   }
 
-  /// Load `maps_list.txt` from assets and parse out each line for .geojson filenames.
-  Future<void> _loadMaps() async {
+  /// Fetch the list of .geojson maps from the Flask backend
+  Future<void> _fetchMapList() async {
     try {
-      final data = await rootBundle.loadString('assets/maps/maps_list.txt');
-      final lines = data.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty);
-      setState(() {
-        allMaps = lines.toList();
-        filteredMaps = List.from(allMaps);
+      final response = await http.get(Uri.parse('$baseUrl/maps'));
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        setState(() {
+          allMaps = jsonData.map((e) => e.toString()).toList();
+          filteredMaps = List.from(allMaps);
 
-        // Pick a default if available
-        if (filteredMaps.isNotEmpty) {
-          selectedMap = filteredMaps.first;
-        }
-      });
+          if (filteredMaps.isNotEmpty) {
+            selectedMap = filteredMaps.first;
+          }
+        });
+      } else {
+        debugPrint('Failed to load maps. Status code: ${response.statusCode}');
+      }
     } catch (e) {
-      // If there's an error (file missing, etc.), handle it gracefully
-      debugPrint('Error loading map list: $e');
+      debugPrint('Error loading maps from backend: $e');
       setState(() {
         allMaps = [];
         filteredMaps = [];
@@ -86,7 +91,6 @@ class _CreateServerPageState extends State<CreateServerPage> {
           .where((m) => m.toLowerCase().contains(query))
           .toList();
 
-      // If the selectedMap is no longer in the filtered list, reset it
       if (!filteredMaps.contains(selectedMap) && filteredMaps.isNotEmpty) {
         selectedMap = filteredMaps.first;
       }
@@ -100,7 +104,7 @@ class _CreateServerPageState extends State<CreateServerPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Container(
-          // A "Source-engine" style box: thick border, background color
+          // "Source-engine" style: thick border, background color
           decoration: BoxDecoration(
             color: fieldColor,
             borderRadius: BorderRadius.circular(borderRadiusValue),
@@ -108,30 +112,21 @@ class _CreateServerPageState extends State<CreateServerPage> {
           ),
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Create a Server',
+                'Singleplayer Setup',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
-
-              // Server Name
-              _buildLabeledField(
-                label: 'Name the server',
-                child: TextField(
-                  controller: _serverNameCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 20),
 
               // Game Mode
               Row(
                 children: [
-                  const Text('Select a gamemode:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Game Mode:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(width: 10),
                   DropdownButton<String>(
                     value: selectedMode,
@@ -149,62 +144,42 @@ class _CreateServerPageState extends State<CreateServerPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
 
-              // If NOT custom mode, we show the map selection from assets
+              // If NOT custom mode, show the map selection from server
               if (!isCustomFileMode) _buildMapSelection(),
 
-              // If custom mode, allow user to upload or pick a custom file
+              // If custom mode, allow user to upload a .geojson
               if (isCustomFileMode) _buildCustomFileUpload(),
-
               const SizedBox(height: 20),
 
-              // Password
+              // Round Time
               _buildLabeledField(
-                label: 'Server Password (optional)',
+                label: 'Round Time (seconds)',
                 child: TextField(
-                  controller: _passwordCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Max Players
-              _buildLabeledField(
-                label: 'Max player count',
-                child: TextField(
-                  controller: _maxPlayersCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
+                  controller: _roundTimeCtrl,
                   keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
-              // Confirm Button
+              // Start Button
               CustomButton(
-                text: 'Confirm',
+                text: 'Start Game',
                 onPressed: () {
-                  // Example: create server with user data
-                  final serverName = _serverNameCtrl.text.trim();
-                  final password = _passwordCtrl.text.trim();
-                  final maxPlayers = int.tryParse(_maxPlayersCtrl.text.trim()) ?? 8;
+                  final mode = selectedMode;
+                  final mapName = selectedMap;
+                  final roundTime = int.tryParse(_roundTimeCtrl.text.trim()) ?? 60;
+                  debugPrint('Starting singleplayer:');
+                  debugPrint('Mode: $mode');
+                  debugPrint('Map: $mapName');
+                  debugPrint('Round Time: $roundTime seconds');
 
-                  // If not custom mode, the map is from 'selectedMap'
-                  // If custom mode, user might have chosen an external file
-                  debugPrint('Server Name: $serverName');
-                  debugPrint('Mode: $selectedMode');
-                  debugPrint('Map: $selectedMap');
-                  debugPrint('Password: $password');
-                  debugPrint('Max Players: $maxPlayers');
-
-                  // Insert your logic to actually create the server
+                  // Insert logic to begin singleplayer game
+                  // e.g., navigate to the game screen with these parameters
                 },
               ),
             ],
@@ -231,10 +206,13 @@ class _CreateServerPageState extends State<CreateServerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select a map:', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Select a map:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 10),
 
-        // Search box for maps
+        // Search box
         TextField(
           controller: _mapSearchCtrl,
           decoration: const InputDecoration(
@@ -244,7 +222,6 @@ class _CreateServerPageState extends State<CreateServerPage> {
         ),
         const SizedBox(height: 10),
 
-        // Dropdown to pick from [filteredMaps]
         if (filteredMaps.isEmpty)
           const Text('No matching maps found.'),
         if (filteredMaps.isNotEmpty)
@@ -255,7 +232,9 @@ class _CreateServerPageState extends State<CreateServerPage> {
             }).toList(),
             onChanged: (val) {
               if (val != null) {
-                setState(() => selectedMap = val);
+                setState(() {
+                  selectedMap = val;
+                });
               }
             },
           ),
@@ -268,13 +247,17 @@ class _CreateServerPageState extends State<CreateServerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Upload map file:', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Upload your own .geojson:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 10),
         CustomButton(
           text: 'Choose File',
           onPressed: () {
-            // You’d typically call a file picker plugin to get a local file path
-            // Then store the chosen file path in some variable for later
+            // Typically call a file picker to get a local file path
+            // Then store the path for your custom logic
+            debugPrint('Custom file upload button clicked');
           },
         ),
       ],

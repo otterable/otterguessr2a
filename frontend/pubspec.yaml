@@ -1,3 +1,5 @@
+# pubspec.yaml, do not remove this line
+
 name: otterguessr2
 description: "A new Flutter project."
 publish_to: 'none'
@@ -10,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  http: ^0.13.5   # <-- IMPORTANT: for making HTTP requests
 
 dev_dependencies:
   flutter_test:
@@ -18,5 +21,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # You can remove or comment out map assets if you no longer load them from local bundles
   assets:
     - assets/logo.png
+    # - assets/maps/maps_list.txt  <-- Not needed if you only read map list from Flask
+    # - assets/maps/...

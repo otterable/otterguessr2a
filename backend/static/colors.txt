@@ -1,0 +1,199 @@
+Color: #ffec9a, Name: 1000 Vanilla
+Color: #ffe363, Name: 1010 Easter Yellow
+Color: #ffd70f, Name: 1020 Citrus
+Color: #e8bd00, Name: 1030 Banana
+Color: #e3bd00, Name: 1040 Asia
+Color: #c6a010, Name: 1050 Curry
+Color: #a9870f, Name: 1060 Mustard
+Color: #7d632f, Name: 1080 Everglade
+Color: #f9ef71, Name: 1100 Butta
+Color: #f1e515, Name: 1110 Brimstone
+Color: #dcce1e, Name: 1120 Banana Joe
+Color: #bab527, Name: 1130 Pepperoni Mild
+Color: #89802e, Name: 1140 Pepperoni Hot
+Color: #615e23, Name: 1150 Reed
+Color: #434229, Name: 1170 Nato
+Color: #21271f, Name: 1180 Military Green
+Color: #fff2b2, Name: 1200 Pudding
+Color: #fdca31, Name: 1210 Yellow Submarine
+Color: #fab700, Name: 1220 Yellow Cab
+Color: #f49e00, Name: 1230 Yolk
+Color: #eb8702, Name: 1240 Golden Yellow
+Color: #c8741c, Name: 1250 Terra
+Color: #503818, Name: 1260 Mushroom
+Color: #f6ead8, Name: 1400 Bone
+Color: #f6e2c9, Name: 1410 Latte
+Color: #edc5a7, Name: 1420 Cappucino
+Color: #d9ac92, Name: 1430 Make Up
+Color: #cb916c, Name: 1440 Toffee
+Color: #885845, Name: 1450 Hot Chocolate
+Color: #6c4c33, Name: 1470 Palish Brown
+Color: #fae9ce, Name: 2000 White Orange
+Color: #FEE9D9, Name: 2010 Orange Ice
+Color: #fac073, Name: 2020 Creme Orange
+Color: #f4a349, Name: 2030 Blast Orange
+Color: #f2942e, Name: 2040 Scampi
+Color: #ee800c, Name: 2050 Orangina
+Color: #ec7205, Name: 2060 Capri
+Color: #ea620d, Name: 2070 Orange
+Color: #e85511, Name: 2080 Pure Orange
+Color: #e23b17, Name: 2090 Red Orange
+Color: #da021e, Name: 2095 Blood Orange
+Color: #f6bec1, Name: 3000 Lychee
+Color: #ee8698, Name: 3010 Bazooka Joe
+Color: #e63a4d, Name: 3020 Strawberry
+Color: #d4003a, Name: 3030 Raspberry
+Color: #b80d25, Name: 3040 Ketchup
+Color: #961521, Name: 3050 Brick
+Color: #71191f, Name: 3060 Royal Red
+Color: #591117, Name: 3070 Purple Red
+Color: #3d0f0a, Name: 3080 Black Red
+Color: #241115, Name: 3085 Vampire
+Color: #f8d2db, Name: 3100 Frozen Strawberry
+Color: #eda8c1, Name: 3110 Frozen Raspberry
+Color: #d74189, Name: 3130 Pink Pink
+Color: #8c0b5e, Name: 3150 Cherry Blossom
+Color: #e0c3cb, Name: 4000 Pale Pink
+Color: #d0a1ac, Name: 4010 Mortadella
+Color: #9a526a, Name: 4020 Dusty Pink
+Color: #82404f, Name: 4030 Ancient Pink
+Color: #78273d, Name: 4040 Powder Pink
+Color: #d1c1dc, Name: 4100 White Lilac
+Color: #a998c5, Name: 4110 Light Lilac
+Color: #7b6caa, Name: 4130 Teen Spirit
+Color: #54418a, Name: 4150 Lavender
+Color: #36377f, Name: 4160 Gonzo
+Color: #262e69, Name: 4170 Blue Velvet
+Color: #0f1e44, Name: 4180 Welsh
+Color: #081327, Name: 4190 Cassis
+Color: #cdb5d5, Name: 4200 Crocus
+Color: #af8cbc, Name: 4210 Viola
+Color: #8c4b90, Name: 4220 Sweet Dreams
+Color: #6d2d7e, Name: 4230 Valerie
+Color: #501c57, Name: 4240 Lakers
+Color: #5b3054, Name: 4250 Deep Purple
+Color: #320e3f, Name: 4260 Black Purple
+Color: #cae8ef, Name: 5000 Flipper
+Color: #a0d7e8, Name: 5010 Fresh Blue
+Color: #6bc8e6, Name: 5020 Baby Blue
+Color: #15b0d7, Name: 5030 Bermuda
+Color: #00a0d0, Name: 5040 Light Blue
+Color: #008bc7, Name: 5050 Sky Blue
+Color: #006dae, Name: 5060 Blue Magic
+Color: #004d87, Name: 5075 Signal Blue
+Color: #00386f, Name: 5080 Ultramarine
+Color: #003056, Name: 5085 Blue Note
+Color: #021f35, Name: 5090 Nautilus
+Color: #d5ecec, Name: 5100 Polar Blue
+Color: #b8e1ea, Name: 5105 Summit
+Color: #87c9db, Name: 5110 Himalaya
+Color: #5fa1b8, Name: 5120 Mount Everest
+Color: #437282, Name: 5140 Mount Fuji
+Color: #1a4f60, Name: 5150 Fjord
+Color: #0c323e, Name: 5160 Deep Sea
+Color: #002030, Name: 5170 Navy
+Color: #e5eecd, Name: 6000 Venom
+Color: #c3dba6, Name: 6010 Linden Green
+Color: #a0c86c, Name: 6020 Green Apple
+Color: #a9c606, Name: 6030 Lime
+Color: #7ab11d, Name: 6040 Lawn Green
+Color: #00822f, Name: 6050 Greenery
+Color: #005f2c, Name: 6060 Fern Green
+Color: #004f26, Name: 6070 Smaragd Green
+Color: #033921, Name: 6080 Jungle Green
+Color: #002d1b, Name: 6090 Deep Forest
+Color: #eef5e2, Name: 6100 Liberty
+Color: #add7c0, Name: 6120 Malachite Light
+Color: #64b699, Name: 6130 Malachite
+Color: #2d8468, Name: 6150 Malachite Dark
+Color: #046d56, Name: 6160 Pine
+Color: #e6f1e5, Name: 6200 Venice
+Color: #bee2df, Name: 6210 CAN2 Cool Candy
+Color: #90d1d9, Name: 6230 Pool
+Color: #4badc4, Name: 6250 Dolphins
+Color: #0085a1, Name: 6260 Aqua
+Color: #006275, Name: 6270 Reef
+Color: #00343d, Name: 6280 Petrol
+Color: #f1f0e9, Name: 7000 Pebble
+Color: #e1e2e1, Name: 7010 Marble
+Color: #c6c7c6, Name: 7020 Wall
+Color: #aaa9a2, Name: 7030 Iron Curtain
+Color: #7b7e7c, Name: 7050 Roof
+Color: #5e6868, Name: 7060 Gravel
+Color: #2f3a3e, Name: 7070 Stealth
+Color: #080f0e, Name: 7090 Coke
+Color: #FFF5E4, Name: 7210 Dolomite
+Color: #EBE1D2, Name: 7220 Ceramic
+Color: #DBD2C4, Name: 7230 Buzzard
+Color: #C8C0B3, Name: 7240 Yosemite
+Color: #B0A99D, Name: 7250 Asphalt
+Color: #969086, Name: 7260 Meteorite
+Color: #76716A, Name: 7270 Basalt
+Color: #f3efcd, Name: 8000 Elm
+Color: #e6d59a, Name: 8010 Sahara Yellow
+Color: #d9bb80, Name: 8020 Sahara Beige
+Color: #b2925e, Name: 8040 Duck Season
+Color: #f4a58b, Name: 8070 Salmon
+Color: #d78166, Name: 8080 Dirty Apricot
+Color: #31191b, Name: 8085 Aubergine
+Color: #b87151, Name: 8090 Nougat
+Color: #7d3822, Name: 8100 Orange Brown
+Color: #90282c, Name: 8110 Rusto Coat
+Color: #3c1016, Name: 8115 Wine Red
+Color: #532f1d, Name: 8120 Cacao
+Color: #141e1d, Name: 8145 Anthracite
+Color: #332e26, Name: 8150 Concrete
+Color: #944b53, Name: 8170 Lip
+Color: #cbb4bc, Name: 8175 Paris
+Color: #d6c5bf, Name: 8180 Brain
+Color: #d3bdb7, Name: 8190 Flesh
+Color: #f7bcb1, Name: CL2100 Shrimp Pastel
+Color: #f29a84, Name: CL2120 Shrimp
+Color: #ee8363, Name: CL2130 Shrimp Dark
+Color: #161f57, Name: CL4300 Louie Lilac
+Color: #c8e0f2, Name: CL5200 Denim Light
+Color: #96c4e0, Name: CL5210 Denim
+Color: #5f97c5, Name: CL5220 Denim Stonewashed
+Color: #ede333, Name: CL6300 Poison Pastel
+Color: #e2de28, Name: CL6310 Poison Light
+Color: #c8d215, Name: CL6320 Poison
+Color: #a9c606, Name: CL6330 Poison Dark
+Color: #464e1c, Name: CL6340 Olive Green
+Color: #a5a779, Name: CL6400 Manila Light
+Color: #828662, Name: CL6410 Manila Green
+Color: #3f3e2a, Name: CL6420 Manila Dark
+Color: #b89247, Name: CL8300 Sand
+Color: #80421c, Name: CL8310 Hazelnut
+Color: #4c1616, Name: CL8320 Chestnut
+Color: #999999, Name: M1000 Silverchrome
+Color: #999999, Name: M1100 Silver Matt
+Color: #806031, Name: M2000 Copperchrome
+Color: #a89254, Name: M3000 Goldchrome
+Color: #a89254, Name: M3010 Gold Matt
+Color: #ffed05, Name: P1000 100% Yellow
+Color: #00aec7, Name: P2000 100% Cyan
+Color: #cf0062, Name: P3000 100% Magenta
+Color: #ffdd1d, Name: S1000 Shock Yellow Light
+Color: #fbba00, Name: S1010 Shock Yellow
+Color: #ed7b01, Name: S2000 Shock Orange Light
+Color: #e85810, Name: S2010 Shock Orange
+Color: #e42617, Name: S2020 Shock Orange Dark
+Color: #ca041a, Name: S3000 Shock Red
+Color: #ae0b19, Name: S3020 Shock Kent Bl. Red
+Color: #e786b1, Name: S4000 Shock Pink Light
+Color: #c72a74, Name: S4010 Shock Pink
+Color: #2b2a66, Name: S4220 Shock Lilac
+Color: #7bc4d2, Name: S5000 Shock Blue Light
+Color: #004b92, Name: S5010 Shock Blue
+Color: #00316b, Name: S5020 Shock Blue Dark
+Color: #79b51c, Name: S6000 Shock Green Light
+Color: #007732, Name: S6010 Shock Green
+Color: #00602a, Name: S6020 Shock Green Dark
+Color: #b15727, Name: S8000 Shock Brown Light
+Color: #592f1f, Name: S8010 Shock Brown
+Color: #2f1e0c, Name: S8020 Shock Brown Dark
+Color: #030201, Name: S9000 Shock Black
+Color: #ffffff, Name: S9100 Shock White
+Color: #f7f5e8, Name: S9110 Shock White Cream
+Color: #ffffff, Name: S9120 Shock White Pure
+Color: #0e294b, Name: Kontakt
